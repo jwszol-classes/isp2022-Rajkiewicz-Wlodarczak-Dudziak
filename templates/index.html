@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Flask Leaflet Website</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/universal.css') }}" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+  crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+  integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+  crossorigin=""></script>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script>
+    var map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    var marker;
+    var open_popup;
+    var layerGroup = new L.layerGroup()
+    layerGroup.addTo(map);
+    
+    function update(){
+      $.get("/update",
+        function(data){
+		  open_popup = "No";
+          layerGroup.eachLayer(function (layer) {
+            if(layer.isPopupOpen()){
+              var temp_popup = layer.getPopup();
+              open_popup = temp_popup.getContent().split(",")[0];
+            }
+
+          });
+
+          layerGroup.clearLayers();
+          data.forEach(add_markers);
+        });
+      }
+
+      function add_markers(record) {
+        marker = new L.marker([parseFloat(record[0]), parseFloat(record[1])]).bindPopup(record[2], {autoPan: false});
+        layerGroup.addLayer(marker);
+        var temp_popup = marker.getPopup();
+        if(temp_popup.getContent().split(",")[0] == open_popup){
+          marker.openPopup();
+        }
+      }
+
+      //update()
+      var intervalId = setInterval(function() {
+          update()
+      }, 5000);
+      //document.getElementById("output2").innerHTML = 5 + 6;
+    L.rectangle([[ 49.0273953314,14.0745211117 ],[54.8515359564,24.0299857927]], {color: "red",fillColor: '#f56969', weight: 1, interactive: false}).addTo(map);
+    map.setView([52,20], 7);
+  </script>
+</body>
+
+</html>
